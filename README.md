@@ -1,6 +1,9 @@
 # paper-itd-seaice
 
 
+1/ Download the data
+2/ Specify info
+
 Correspondence between experiment names and labels
 
 Label	ITD formulation		nb cat		Exp name
