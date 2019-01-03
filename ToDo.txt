@@ -1,0 +1,3 @@
+- Specify alpha value and category limits for S2.XX
+- Take Edu's comments into account
+- Take reviewers comments into account
