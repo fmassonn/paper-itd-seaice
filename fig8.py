@@ -16,7 +16,7 @@ import os
 from seaice_commondiags import *
 
 # Import directory location
-exec(open("info.py"))
+exec(open("namelist.py"))
 
 # Years
 yearb, yeare = 1995, 2014
@@ -27,20 +27,19 @@ n_years = len(years)
 regions = ["Arctic", "Antarctic"]
 n_regions = len(regions)
 
-# Experiments to plot
-exps      = ["EXP_020", "EXP_021", "EXP_022", "EXP_023", "EXP_024", "EXP_025"] 
+# indices of experiments to plot (from namelist)
+indices = [6, 7, 8, 9, 10, 11]
 
+# Experiments to plot
+exps   = [metadata[i][1] for i in indices]
 n_exps = len(exps)
 
-labels = ["S2.03",   "S2.05",   "S2.07",   "S2.09",   "S2.11",   "S2.15"]
 
-boundaries= [  [0.01, 0.25, 0.50,                                                                          99.0], \
-               [0.01, 0.25, 0.50, 0.75, 1.00,                                                              99.0], \
-               [0.01, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00,                                                  99.0], \
-               [0.01, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00,                                      99.0], \
-               [0.01, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00,                          99.0], \
-               [0.01, 0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00, 11.00, 14.0, 17.0, 20.0, 99.0], \
-            ]
+labels = [metadata[i][0] for i in indices]
+
+colors = [metadata[i][2] for i in indices]
+
+boundaries= [[0.01] + metadata[i][3] for i in indices] 
 
 binwidths = [[b[j +  1] - b[j] for j in range(len(b) - 1)] for b in boundaries]
 

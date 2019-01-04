@@ -15,19 +15,24 @@ import os
 from seaice_commondiags import *
 
 # Import directory location
-exec(open("info.py"))
+exec(open("namelist.py"))
 
 # Years
 yearb, yeare = 1995, 2014
 years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
+# indices of experiments to plot (from namelist)
+indices = [6, 7, 8, 9, 10, 11, 15]
+
 # Experiments to plot
-exps   = ["EXP_020", "EXP_021", "EXP_022", "EXP_023", "EXP_024", "EXP_025", "REF"] 
+exps   = [metadata[i][1] for i in indices]
 n_exps = len(exps)
 
-labels = ["S2.03",   "S2.05",   "S2.07",   "S2.09",   "S2.11",   "S2.15", "REF"]
-colors = ["#00332b", "#e7b382", "#bbaa5e", "#d2dce1", "#8ba4ae", "#94d6ba", "#434343"]
+
+labels = [metadata[i][0] for i in indices]
+
+colors = [metadata[i][2] for i in indices]
 
 
 # Read NEMO grid

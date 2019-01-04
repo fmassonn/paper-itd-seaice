@@ -15,19 +15,22 @@ import os
 from seaice_commondiags import *
 
 # Import directory location
-exec(open("info.py"))
+exec(open("namelist.py"))
 
 # Years
 yearb, yeare = 1995, 2014
 years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
+# indices of experiments to plot (from namelist)
+indices = [0, 1, 2, 3, 4, 5]
+
 # Experiments to plot
-exps   = ["EXP_015", "EXP_016", "EXP_014", "EXP_017", "EXP_018", "EXP_019"]
+exps   = [metadata[i][1] for i in indices]
 n_exps = len(exps)
 
-labels = ["S1.01",   "S1.03",   "S1.05",   "S1.10",   "S1.30",   "S1.50"]
-colors = ["#957DAD", "#2C1392", "#83AE44", "#FFD500", "#FFB661", "#FF6961"]
+labels = [metadata[i][0] for i in indices]
+colors = [metadata[i][2] for i in indices]
 
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
@@ -141,5 +144,6 @@ for j_r, r in enumerate(regions):
         plt.gca().yaxis.grid(True)
         j_plot += 1
 
+plt.tight_layout()
 plt.savefig("./fig5.png", dpi = 300)
 plt.close("all")

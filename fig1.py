@@ -8,44 +8,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
-def LIM_itd(N, hbar = 2.0, alpha = 0.05):
-    """
-    Function returning the category limits for the LIM3 formulation
-
-    N    : number of categories
-    hbar : expected mean thickness over the domain
-    alpha: exponent controlling the shape of the ITD
-
-    Returns: the N upper limits of the N categories
-    """
-
-    if (type(N) is not int) or (N < 1):
-        sys.exit("(f) error: N not valid")
-  
-
-    def fun(i):
-        return ((N * (3.0 * hbar + 1.0) ** alpha) / \
-               ((N - i) * (3.0 * hbar + 1.0) ** alpha + i) ) ** (alpha ** (-1.0)) \
-               - 1.0
-
-    out = [fun(i) for i in range(1, N + 1)]
-    out[-1] = 99.0 # LIM convention to replace last boundary
-    
-    return out
-
-
+exec(open("./namelist.py"))
 
 # First set of experiments: standard ITD of LIM
 # ---------------------------------------------    
-table = [\
-         ["S1.50", LIM_itd(50)], \
-         ["S1.30", LIM_itd(30)], \
-         ["S1.10", LIM_itd(10)], \
-         ["S1.05", LIM_itd(5 )], \
-         ["S1.03", LIM_itd(3 )], \
-         ["S1.01", LIM_itd(1 )], \
-        ]
+#table = [\
+#         ["S1.50", LIM_itd(50)], \
+#         ["S1.30", LIM_itd(30)], \
+#         ["S1.10", LIM_itd(10)], \
+#         ["S1.05", LIM_itd(5 )], \
+#         ["S1.03", LIM_itd(3 )], \
+#         ["S1.01", LIM_itd(1 )], \
+#        ]
 
+table = [[m[0], m[3], m[2]] for m in metadata if m[0][0:2] == "S1"]
 fig = plt.figure(figsize = (6, 10))
 
 plt.subplot(3, 1, 1)
@@ -57,10 +33,10 @@ for j in range(len(table)):
     yl = len(table) - j + 1 - 1.0 / 3.0
 
 
-    plt.plot((xl, xu), (yl, yl), color = [0.2, 0.2, 0.2])
-    plt.plot((xl, xu), (yu, yu), color = [0.2, 0.2, 0.2])
-    plt.plot((xl, xl), (yl, yu), color = [0.2, 0.2, 0.2])
-    [plt.plot((x, x), (yl, yu), color = [0.2, 0.2, 0.2]) for x in table[j][1]]
+    plt.plot((xl, xu), (yl, yl), color = table[j][2])
+    plt.plot((xl, xu), (yu, yu), color = table[j][2])
+    plt.plot((xl, xl), (yl, yu), color = table[j][2])
+    [plt.plot((x, x), (yl, yu), color = table[j][2]) for x in table[j][1]]
 
 plt.gca().spines['right'].set_visible(False)
 plt.gca().spines['top'].set_visible(False)
@@ -71,14 +47,7 @@ plt.tight_layout()
 
 # Second set of experiments: prescribed ITD by appending
 # ------------------------------------------------------    
-table = [\
-         ["S2.15", [0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00, 11.00, 14.0, 17.0, 20.0, 99.0]], \
-         ["S2.11", [0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00, 6.00, 8.00,                          99.0]], \
-         ["S2.09", [0.25, 0.50, 0.75, 1.00, 1.50, 2.00, 3.00, 4.00,                                      99.0]], \
-         ["S2.07", [0.25, 0.50, 0.75, 1.00, 1.50, 2.00,                                                  99.0]], \
-         ["S2.05", [0.25, 0.50, 0.75, 1.00,                                                              99.0]], \
-         ["S2.03", [0.25, 0.50,                                                                          99.0]], \
-        ]
+table = [[m[0], m[3], m[2]] for m in metadata if m[0][0:2] == "S2"]
 
 plt.subplot(3, 1, 2)
 
@@ -89,10 +58,10 @@ for j in range(len(table)):
     yl = len(table) - j + 1 - 1.0 / 3.0
 
 
-    plt.plot((xl, xu), (yl, yl), color = [0.2, 0.2, 0.2])
-    plt.plot((xl, xu), (yu, yu), color = [0.2, 0.2, 0.2])
-    plt.plot((xl, xl), (yl, yu), color = [0.2, 0.2, 0.2])
-    [plt.plot((x, x), (yl, yu), color = [0.2, 0.2, 0.2]) for x in table[j][1]]
+    plt.plot((xl, xu), (yl, yl), color = table[j][2])
+    plt.plot((xl, xu), (yu, yu), color = table[j][2])
+    plt.plot((xl, xl), (yl, yu), color = table[j][2])
+    [plt.plot((x, x), (yl, yu), color =  table[j][2]) for x in table[j][1]]
 
 plt.gca().spines['right'].set_visible(False)
 plt.gca().spines['top'].set_visible(False)
@@ -110,6 +79,8 @@ table = [\
          ["S3.05", [                                                    0.50,                                                     1.00,                                               2.00,                                           4.00, 99.0]], \
         ]
 
+table = [[metadata[j][0], metadata[j][3], metadata[j][2]] for j in [14, 13, 9, 12]]
+
 plt.subplot(3, 1, 3)
 
 xl = 0.0
@@ -119,10 +90,10 @@ for j in range(len(table)):
     yl = len(table) - j + 1 - 1.0 / 3.0
 
 
-    plt.plot((xl, xu), (yl, yl), color = [0.2, 0.2, 0.2])
-    plt.plot((xl, xu), (yu, yu), color = [0.2, 0.2, 0.2])
-    plt.plot((xl, xl), (yl, yu), color = [0.2, 0.2, 0.2])
-    [plt.plot((x, x), (yl, yu), color = [0.2, 0.2, 0.2]) for x in table[j][1]]
+    plt.plot((xl, xu), (yl, yl), color = table[j][2])
+    plt.plot((xl, xu), (yu, yu), color = table[j][2])
+    plt.plot((xl, xl), (yl, yu), color = table[j][2])
+    [plt.plot((x, x), (yl, yu), color = table[j][2]) for x in table[j][1]]
 
 plt.gca().spines['right'].set_visible(False)
 plt.gca().spines['top'].set_visible(False)

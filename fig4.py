@@ -17,7 +17,7 @@ import os
 from seaice_commondiags import *
 
 # Import directory location
-exec(open("info.py"))
+exec(open("namelist.py"))
 
 # Years
 yearb, yeare = 1995, 2014
@@ -28,8 +28,12 @@ n_years = len(years)
 regions = ["Arctic", "Antarctic"]
 n_regions = len(regions)
 
+# indices of experiments to plot (from namelist)
+indices = [2]
+
 # Experiments to plot
-exps      = ["EXP_014"] 
+exps   = [metadata[i][1] for i in indices]
+
 
 
 # Read NEMO grid

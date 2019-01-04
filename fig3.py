@@ -16,7 +16,7 @@ import os
 from seaice_commondiags import *
 
 # Import directory location
-exec(open("info.py"))
+exec(open("namelist.py"))
 
 # Years
 yearb, yeare = 1995, 2014
@@ -27,13 +27,17 @@ n_years = len(years)
 regions = ["Arctic", "Antarctic"]
 n_regions = len(regions)
 
+# indices of experiments to plot (from namelist)
+indices = [0, 1, 2, 3, 4, 5]
+
 # Experiments to plot
-exps      = ["EXP_015", "EXP_016", "EXP_014", "EXP_017", "EXP_018", "EXP_019"] 
+exps   = [metadata[i][1] for i in indices]
+
 reference = 2 #index of the reference for differences (pythonic)
 
 n_exps = len(exps)
 
-labels = ["S1.01",   "S1.03",   "S1.05",   "S1.10",   "S1.30",   "S1.50"]
+labels = [metadata[i][0] for i in indices]
 
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
