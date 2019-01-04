@@ -161,7 +161,7 @@ for j_r, r in enumerate(regions):
             plt.plot(hrtime, f(hrtime), color = colors[j_e], lw = 3, label = labels[j_e])
 
             # Plot data lighter
-            plt.scatter(newtime, newseries, 50, marker = "*", color = colors[j_e], zorder = 1000, edgecolor = "white", linewidth = 0.2)
+            plt.scatter(newtime, newseries, 80, marker = "*", color = colors[j_e], zorder = 1000, edgecolor = "white", linewidth = 0.2)
 
         ylim = plt.gca().get_ylim()
 
@@ -186,5 +186,6 @@ for j_r, r in enumerate(regions):
         plt.gca().yaxis.grid(True)
         j_plot += 1
 
+plt.tight_layout()
 plt.savefig("./fig2.png", dpi = 300)
 plt.close("all")
