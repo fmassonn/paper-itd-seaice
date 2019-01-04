@@ -17,12 +17,6 @@ from seaice_commondiags import *
 # Import directory location
 exec(open("info.py"))
 
-# Some color functions (https://gist.github.com/matthewkremer/3295567)
-def hex_to_rgb(hex):
-     hex = hex.lstrip('#')
-     hlen = len(hex)
-     return tuple(int(hex[i:i+hlen/3], 16) / 255.0 for i in range(0, hlen, hlen/3))
-
 # Years
 yearb, yeare = 1995, 2014
 years = np.arange(yearb, yeare + 1)
@@ -38,12 +32,12 @@ colors = ["#957DAD", "#2C1392", "#83AE44", "#FFD500", "#FFB661", "#FF6961", "#43
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
 f = Dataset(gridfile, mode = "r")
-e1t = f.variables["e1t"][:]
-e2t = f.variables["e2t"][:]
+e1t = f.variables["e1t"][0, :, :]
+e2t = f.variables["e2t"][0, :, :]
 cellarea = e1t * e2t
-lat = f.variables["gphit"][:]
-lon = f.variables["glamt"][:]
-mask= f.variables["tmaskutil"][:]
+lat = f.variables["gphit"][0, :, :]
+lon = f.variables["glamt"][0, :, :]
+mask= f.variables["tmaskutil"][0, :, :]
 f.close()
 
 
