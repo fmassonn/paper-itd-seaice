@@ -105,7 +105,7 @@ plt.close("all")
 
 # Save mask as NetCDF
 # -------------------
-fileout = repo + "./thermo-mask.nc"
+fileout = repo + "./thermomask.nc"
 # Create file
 f = Dataset(fileout, mode = "w")
 # Create dimensions

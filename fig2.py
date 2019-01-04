@@ -161,9 +161,7 @@ for j_r, r in enumerate(regions):
             plt.plot(hrtime, f(hrtime), color = colors[j_e], lw = 3, label = labels[j_e])
 
             # Plot data lighter
-            rgb = hex_to_rgb(colors[j_e])
-            rgb_dark = [0.5 + 0.5 * rg for rg in rgb]
-            plt.scatter(newtime, newseries, 50, marker = "*", color = rgb, zorder = 1000, edgecolor = "white", linewidth = 0.2)
+            plt.scatter(newtime, newseries, 50, marker = "*", color = colors[j_e], zorder = 1000, edgecolor = "white", linewidth = 0.2)
 
         ylim = plt.gca().get_ylim()
 
