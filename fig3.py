@@ -70,8 +70,6 @@ for j_e, e in enumerate(exps):
 
 # Plots
 fig = plt.figure(figsize = (12, 6))
-# Create basemap
-m = Basemap(projection='npstere',boundinglat=10,lon_0=270,resolution='l')
 
 j_plot = 1
 
