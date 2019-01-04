@@ -72,7 +72,7 @@ def compute_area(concentration, cellarea, mask = 1):
   import sys
   import numpy as np
 
-  if np.max(concentration) < 10.0:
+  if np.max(concentration) < 2.0:
     sys.exit("(compute_area): concentration seems to not be in percent")
 
   if len(concentration.shape) == 3:
