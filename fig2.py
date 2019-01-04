@@ -29,11 +29,11 @@ years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
 # Experiments to plot
-exps   = ["REF", "EXP_015", "EXP_016", "EXP_014", "EXP_017", "EXP_018", "EXP_019"] 
+exps   = ["EXP_015", "EXP_016", "EXP_014", "EXP_017", "EXP_018", "EXP_019", "REF"] 
 n_exps = len(exps)
 
-labels = ["REF",     "S1.01",   "S1.03",   "S1.05",   "S1.10",   "S1.30",   "S1.50"]
-colors = ["#434343", "#957DAD", "#2C1392", "#83AE44", "#FFD500", "#FFB661", "#FF6961"]
+labels = ["S1.01",   "S1.03",   "S1.05",   "S1.10",   "S1.30",   "S1.50", "REF"]
+colors = ["#957DAD", "#2C1392", "#83AE44", "#FFD500", "#FFB661", "#FF6961", "#434343"]
 
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
@@ -67,22 +67,48 @@ for j_e, e in enumerate(exps):
             for j_r, r in enumerate(regions):
                 if r == "Arctic":
                     shortname = "nh"
+                    volshort  = "PIOMAS"
                 elif r == "Antarctic":
                     shortname = "sh"
+                    volshort = "GIOMAS"
                 else: 
                     sys.exit("(fig2) region unknown")
 
-            if d == "extent":
-                filein = repo + "/REF/" + "siconc_SImon_OSI-409a_r1i1p1_197901-201512_nh.nc"
-                f = Dataset(filein, mode = "r")
-                siconc = f.variables["siconc"][:]
-                mask_or= f.variables["sftof"][:]
-                cellarea_or=f.variables["areacello"][:]
-                f.close()
+                if d == "extent":
+                    filein = repo + "/REF/" + "siconc_SImon_OSI-409a_r1i1p1_197901-201512_" + shortname + ".nc"
+                    f = Dataset(filein, mode = "r")
+                    siconc = f.variables["siconc"][:]
+                    mask_or= f.variables["sftof"][:]
+                    cellarea_or=f.variables["areacello"][:]
+                    latitude_or=f.variables["latitude"][:]
+                    f.close()
+                    if r == "Arctic":
+                        regionmask = (latitude_or > 0.0)
+                    elif r == "Antarctic":
+                        regionmask = (latitude_or < 0.0)
+                    else:
+                        sys.exit("(fig2) region unknown")
+                    diag =  compute_extent(siconc, cellarea_or, threshold = 15.0, mask = mask_or * regionmask)
+                    data[j_d, j_r, j_e, :] = diag[(yearb - 1979) * 12:(yeare - 1979) * 12 + 12]
 
-                diag =  compute_extent(siconc[:, :, :], cellarea_or[0, :, :], threshold = 15.0, mask = mask_or[0, :, :])
 
-                data[j_d, j_r, j_e, (year - yearb) * 12 : (year - yearb) * 12 + 12] = diag[(yearb - 1979) * 12:(yeare - 1979) * 12 + 12]
+                if d == "volume":
+                    filein = repo + "/REF/" + "sivol_SImon_" + volshort + "_r1i1p1_197901-201512.nc"
+                    f = Dataset(filein, mode = "r")
+                    sivol = f.variables["sivol"][:]
+                    mask_or=f.variables["sftof"][:]
+                    cellarea_or=f.variables["areacello"][:]
+                    latitude_or = f.variables["latitude"][:]
+                    f.close()
+                    if r == "Arctic":
+                        regionmask = (latitude_or > 0.0)
+                    elif r == "Antarctic":
+                        regionmask = (latitude_or < 0.0)
+                    else:
+                        sys.exit("(fig2) region unknown")
+
+                    diag = compute_volume(sivol, cellarea_or, mask = mask_or * regionmask)
+                    data[j_d, j_r, j_e, :] = diag[(yearb - 1979) * 12:(yeare - 1979) * 12 + 12]
     else: # Model data
 
         # 1. Load the data
@@ -165,6 +191,7 @@ for j_r, r in enumerate(regions):
         plt.ylabel(units[j_d])
         plt.legend()
    
+        plt.gca().yaxis.grid(True)
         j_plot += 1
 
 plt.savefig("./fig2.png", dpi = 300)
