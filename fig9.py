@@ -193,5 +193,5 @@ for j_r, r in enumerate(regions):
         j_plot += 1
 
 plt.tight_layout()
-plt.savefig("./fig9.png", dpi = 300)
+plt.savefig("./fig9.pdf", dpi = 300)
 plt.close("all")

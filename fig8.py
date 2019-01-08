@@ -159,5 +159,5 @@ for j_r, r in enumerate(regions):
 
 plt.text(-20, -70, "Sea ice thickness [m]", fontsize = 14)
 plt.tight_layout(pad = 2.2)#, w_pad=1.5, h_pad=1.0)
-plt.savefig("./fig8.png", dpi = 300)
+plt.savefig("./fig8.pdf", dpi = 300)
 plt.close("all")

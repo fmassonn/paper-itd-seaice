@@ -42,5 +42,5 @@ plt.ylabel("Wall-clock time per year\nof simulation [min]")
 plt.grid()
 plt.gca().set_axisbelow(True)
 plt.tight_layout()
-plt.savefig("./fig10.png", dpi = 300) ;
+plt.savefig("./fig10.pdf", dpi = 300) ;
 

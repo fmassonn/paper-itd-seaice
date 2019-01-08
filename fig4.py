@@ -85,10 +85,10 @@ for j_r, r in enumerate(regions):
 
     # Create Basemap
     if r == "Arctic":
-        m = Basemap(projection = "npstere", boundinglat = 65, lon_0 = 0,  resolution = "l")
+        m = Basemap(projection = "npstere", boundinglat = 60, lon_0 = 0,  resolution = "l")
         month = 3 - 1
     elif r == "Antarctic":
-        m = Basemap(projection = "spstere", boundinglat = -60, lon_0 = 180, resolution = "l")
+        m = Basemap(projection = "spstere", boundinglat = -55, lon_0 = 180, resolution = "l")
         month = 9 - 1
 
     x, y = m(lon, lat)
@@ -103,7 +103,7 @@ for j_r, r in enumerate(regions):
     j_plot += 1   
 
 plt.tight_layout()
-plt.savefig("./fig4.png", dpi = 300)
+plt.savefig("./fig4.pdf", dpi = 300)
 plt.close("all")
 
 

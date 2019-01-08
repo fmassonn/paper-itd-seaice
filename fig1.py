@@ -12,17 +12,9 @@ exec(open("./namelist.py"))
 
 # First set of experiments: standard ITD of LIM
 # ---------------------------------------------    
-#table = [\
-#         ["S1.50", LIM_itd(50)], \
-#         ["S1.30", LIM_itd(30)], \
-#         ["S1.10", LIM_itd(10)], \
-#         ["S1.05", LIM_itd(5 )], \
-#         ["S1.03", LIM_itd(3 )], \
-#         ["S1.01", LIM_itd(1 )], \
-#        ]
 
 table = [[m[0], m[3], m[2]] for m in metadata if m[0][0:2] == "S1"]
-fig = plt.figure(figsize = (6, 10))
+fig = plt.figure(figsize = (4, 7))
 
 plt.subplot(3, 1, 1)
 
@@ -102,5 +94,5 @@ plt.xlabel("Ice thickness [m]")
 plt.xlim(-xu / 30.0, xu)
 plt.yticks(np.arange(len(table) + 1, 1, -1), [t[0] for t in table])
 plt.tight_layout()
-plt.savefig("./fig1.png", dpi = 300)
+plt.savefig("./fig1.pdf", dpi = 300)
 
