@@ -1,46 +1,149 @@
 #!/usr/bin/python
-#
+
 # Author Francois Massonnet
-# Date January 2019
+# Date Jan 2019
+
+# Figure S2 of the ITD paper: seasonal cycles of bottom ice growth
+
 import numpy as np
 import matplotlib.pyplot as plt
+from netCDF4 import Dataset
+from scipy.interpolate import interp1d
+import os
 
-# Plot performance as function of number of categories
+# Import functions
+from seaice_commondiags import *
 
-n_cat = [5, 1, 3, 10, 30, 50, 3, 5, 7, 9, 11, 15, 5, 17, 33]
-n_exp = len(n_cat)
+# Import directory location
+exec(open("namelist.py"))
 
-time = np.array([
-    [30.50, 30.75, 30.66, 31.00, 30.75] , \
-    [29.00, 29.30, 29.60, 29.60, 30.00] , \
-    [30.50, 30.40, 30.45, 30.85, 30.25] , \
-    [35.50, 35.30, 37.40, 36.00, 37.40] , \
-    [59.75, 59.75, 60.50, 60.25, 61.00] , \
-    [83.25, 86.00, 85.25, 85.75, 85.20] , \
-    [30.10, 30.00, 29.85, 29.85, 30.25] , \
-    [31.50, 31.60, 31.50, 31.60, 30.85] , \
-    [32.40, 32.50, 32.40, 32.45, 32.10] , \
-    [34.85, 34.60, 34.50, 34.10, 34.15] , \
-    [36.00, 36.45, 36.50, 36.45, 36.50] , \
-    [39.75, 39.90, 39.80, 40.00, 39.90] , \
-    [29.75, 30.66, 30.25, 30.40, 30.25] , \
-    [40.40, 41.75, 41.75, 42.00, 43.50] , \
-    [61.90, 61.66, 61.40, 63.00, 61.40] , \
-    ]) 
+# Years
+yearb, yeare = 1995, 2014
+years = np.arange(yearb, yeare + 1)
+n_years = len(years)
 
-ave_time = np.mean(time, 1) ;
-plt.figure(figsize = (4, 3))
+# indices of experiments to plot (from namelist)
+indices = [12, 9, 13, 14]
 
-for j_exp in np.arange(n_exp):
-    plt.scatter(n_cat[j_exp], ave_time[j_exp], 50, marker = "x", color = [0.2, 0.2, 0.2])
+# Experiments to plot
+exps   = [metadata[i][1] for i in indices]
+n_exps = len(exps)
+
+labels = [metadata[i][0] for i in indices]
+colors = [metadata[i][2] for i in indices]
+
+# Read NEMO grid
+gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
+f = Dataset(gridfile, mode = "r")
+e1t = f.variables["e1t"][0, :, :]
+e2t = f.variables["e2t"][0, :, :]
+cellarea = e1t * e2t
+lat = f.variables["gphit"][0, :, :]
+lon = f.variables["glamt"][0, :, :]
+mask= f.variables["tmaskutil"][0, :, :]
+f.close()
+
+# Read thermodynamic mask (based on script fig4.py)
+thermomaskfile = repo + "/" + "thermomask.nc"
+if not os.path.isfile(thermomaskfile):
+    sys.exit("Mask file not found, compute it using fig4.py")
+f = Dataset(thermomaskfile, mode = "r")
+thermomask = f.variables["thermomask"][:]
+f.close()
+
+diags = ["bottom ice growth"]
+units = ["mm/day"]
+n_diags = len(diags)
+
+regions =   ["Arctic", "Antarctic"]
+n_regions = len(regions)
 
 
-plt.xlim(0, 52)
-plt.ylim(0, 90)
-plt.xlabel("Number of categories") ;
-plt.ylabel("Wall-clock time per year\nof simulation [min]")
-plt.grid()
-plt.gca().set_axisbelow(True)
+data = np.empty((n_diags, n_regions, n_exps, n_years * 12))
+data[:] = np.nan
+# Seasonal cycles
+cycles = np.empty((n_diags, n_regions, n_exps, 12))
+cycles[:] = np.nan
+
+for j_e, e in enumerate(exps):
+    # 1. Load the data
+    for year in years:
+        filein = repo + "/" + e + "/" + e + "_1m_" + str(year) + "0101_" + str(year) + "1231_icemod.nc"
+        f = Dataset(filein, mode = "r")
+        vfxbog = f.variables["vfxbog"][:] * 1000.0 # m/day to mm / day
+        f.close()
+ 
+        # Compute diagnostics
+        for j_r, r in enumerate(regions):
+            if r == "Arctic":
+                maskregion = (lat > 0.0) * thermomask * mask
+            elif r == "Antarctic":
+                maskregion = (lat < 0.0) * thermomask * mask
+            else:
+                sys.exit("(fig2) region unknown")
+            for j_d, d in enumerate(diags):
+                if d == "bottom ice growth":
+                    # minus sign because of convention
+                    diag = np.asarray([np.sum( -vfxbog[jt, :, :] * cellarea * maskregion) / np.sum(cellarea * maskregion) for jt in range(vfxbog.shape[0])])
+                else:
+                    sys.exit("diag unknown")
+
+                data[j_d, j_r, j_e, (year - yearb) * 12 : (year - yearb) * 12 + 12] = diag
+    
+
+    # Compute seasonal cycles
+    for j_r, r in enumerate(regions):
+        for j_d, d in enumerate(diags):
+            series = data[j_d, j_r, j_e, :]  
+            cycles[j_d, j_r, j_e, :] = np.array([np.mean(series[m::12]) for m in np.arange(12)])
+
+# Plots
+fig = plt.figure(figsize = (6, 6))
+
+j_plot = 1
+
+for j_r, r in enumerate(regions):
+    for j_d, d in enumerate(diags):
+        plt.subplot(n_regions, n_diags, j_plot)
+        for j_e, e in enumerate(exps):
+            # Trick: appending the January after December and December before January for 
+            #        better visual effect
+            series = cycles[j_d, j_r, j_e, :]
+            newseries = np.append(np.append(series[-1], series), series[0])
+
+            newtime = np.arange(0, 12 + 2)
+            f = interp1d(newtime, newseries, kind = 'cubic')
+
+            hrtime = np.arange(0, 12 + 1, 0.1)
+
+            plt.plot(hrtime, f(hrtime), color = colors[j_e], lw = 3, label = labels[j_e])
+
+            # Plot data lighter
+            plt.scatter(newtime, newseries, 80, marker = "*", color = colors[j_e], zorder = 1000, edgecolor = "white", linewidth = 0.2)
+
+        ylim = plt.gca().get_ylim()
+
+        for m in range(12):
+          if m % 2 == 0: 
+            col = [0.9, 0.9, 0.9]
+          else:
+            col = [1.0, 1.0, 1.0]
+
+          plt.fill((m + 0.5, m + 1.5, m + 1.5, m + 0.5), (0.0, 0.0, 1e9, 1e9), color = col, zorder = 0)
+
+
+        plt.title(r + " " + d)
+        plt.xlim(0.5, 12.5)
+        plt.ylim(ylim)
+        plt.xticks(range(1, 12 + 1), ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"])   
+        plt.gca().tick_params(bottom = "off")
+        plt.gca().set_ylim(bottom = 0)
+        plt.ylabel(units[j_d])
+        plt.legend()
+   
+        plt.gca().yaxis.grid(True)
+        j_plot += 1
+
 plt.tight_layout()
-plt.savefig("./figS2.pdf", dpi = 300) ;
-
+plt.savefig("./figS2.pdf", dpi = 300)
+plt.close("all")
