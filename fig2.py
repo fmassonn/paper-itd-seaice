@@ -22,6 +22,8 @@ yearb, yeare = 1995, 2014
 years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
+remove_CAA = False # Whether or not to exclude the Canadian Arctic Archipelago
+
 # indices of experiments to plot (from namelist)
 indices = [0, 1, 2, 3, 4, 5, 15]
 
@@ -40,6 +42,7 @@ e2t = f.variables["e2t"][0, :, :]
 cellarea = e1t * e2t
 lat = f.variables["gphit"][0, :, :]
 lon = f.variables["glamt"][0, :, :]
+lon[lon > 180.0] = lon[lon > 180.0] - 360.0
 mask= f.variables["tmaskutil"][0, :, :]
 f.close()
 
@@ -96,9 +99,13 @@ for j_e, e in enumerate(exps):
                     mask_or=f.variables["sftof"][:]
                     cellarea_or=f.variables["areacello"][:]
                     latitude_or = f.variables["latitude"][:]
+                    longitude_or = f.variables["longitude"][:]
+                    longitude_or[longitude_or > 180.0] = longitude_or[longitude_or > 180.0] - 360.0
                     f.close()
                     if r == "Arctic":
                         regionmask = (latitude_or > 0.0)
+                        if remove_CAA: 
+                            regionmask = regionmask * (1.0 - (longitude_or < -75) * (longitude_or > -120) * (latitude_or > 66) * (latitude_or < 80))
                     elif r == "Antarctic":
                         regionmask = (latitude_or < 0.0)
                     else:
@@ -120,6 +127,8 @@ for j_e, e in enumerate(exps):
             for j_r, r in enumerate(regions):
                 if r == "Arctic":
                     maskregion = (lat > 0.0)
+                    if remove_CAA:
+                        maskregion = maskregion * (1.0 - (lon < -75) * (lon > -120) * (lat > 66) * (lat < 80))
                 elif r == "Antarctic":
                     maskregion = (lat < 0.0)
                 else:

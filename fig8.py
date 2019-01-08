@@ -3,13 +3,12 @@
 # Author Francois Massonnet
 # Date Jan 2019
 
-# Figure 8 of the ITD paper: ITDs over masked zone
+# Figure 8 of the ITD paper: seasonal cycles of sea ice extent and volume
 
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
-from mpl_toolkits.basemap import Basemap
-
+from scipy.interpolate import interp1d
 import os
 
 # Import functions
@@ -23,12 +22,8 @@ yearb, yeare = 1995, 2014
 years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
-# Regions
-regions = ["Arctic", "Antarctic"]
-n_regions = len(regions)
-
 # indices of experiments to plot (from namelist)
-indices = [6, 7, 8, 9, 10, 11]
+indices = [12, 9, 13, 14, 15]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]
@@ -39,9 +34,6 @@ labels = [metadata[i][0] for i in indices]
 
 colors = [metadata[i][2] for i in indices]
 
-boundaries= [[0.01] + metadata[i][3] for i in indices] 
-
-binwidths = [[b[j +  1] - b[j] for j in range(len(b) - 1)] for b in boundaries]
 
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
@@ -52,112 +44,154 @@ cellarea = e1t * e2t
 lat = f.variables["gphit"][0, :, :]
 lon = f.variables["glamt"][0, :, :]
 mask= f.variables["tmaskutil"][0, :, :]
-ny, nx = mask.shape
 f.close()
 
-# Read thermodynamic mask (based on script fig4.py)
-thermomaskfile = repo + "/" + "thermomask.nc"
-if not os.path.isfile(thermomaskfile):
-    sys.exit("Mask file not found, compute it using fig4.py")
-f = Dataset(thermomaskfile, mode = "r")
-thermomask = f.variables["thermomask"][:]
-f.close()
 
-#We define the variable that will have the itds
-# since the number of categories varies, we make that 
-# using a list
+diags = ["volume"]
+units = ["10$^3$ km$^3$"]
+n_diags = len(diags)
 
-itd = list()
-[itd.append(list()) for e in range(n_exps)] # list of n_exps experiments
-[[j.append(list()) for m in range(12)] for j in itd] # 12 months
-[[[k.append(list()) for r in range(n_regions)] for k in p] for p in itd]
+regions =   ["Arctic", "Antarctic"]
+n_regions = len(regions)
 
+
+data = np.empty((n_diags, n_regions, n_exps, n_years * 12))
+data[:] = np.nan
+# Seasonal cycles
+cycles = np.empty((n_diags, n_regions, n_exps, 12))
+cycles[:] = np.nan
 
 for j_e, e in enumerate(exps):
-    print(j_e)
-    # 1. Load the data
-    for year in years:
-        filein = repo + "/" + e + "/" + e + "_1m_" + str(year) + "0101_" + str(year) + "1231_icemoa.nc"
-        f = Dataset(filein, mode = "r")
-        siconcat = f.variables["siconcat"][:] * 100.0 # to %
-        sithicat = f.variables["sithicat"][:]
-        f.close()
-        _, ncat, _, _ = siconcat.shape
+    if e == "REF":
+        for j_d, d in enumerate(diags):
+            for j_r, r in enumerate(regions):
+                if r == "Arctic":
+                    shortname = "nh"
+                    volshort  = "PIOMAS"
+                elif r == "Antarctic":
+                    shortname = "sh"
+                    volshort = "GIOMAS"
+                else: 
+                    sys.exit("(fig2) region unknown")
 
-        if year == yearb:
-            data_conc = np.empty((n_years * 12, ncat, ny, nx))
-            data_conc[:] = np.nan
+                if d == "extent":
+                    filein = repo + "/REF/" + "siconc_SImon_OSI-409a_r1i1p1_197901-201512_" + shortname + ".nc"
+                    f = Dataset(filein, mode = "r")
+                    siconc = f.variables["siconc"][:]
+                    mask_or= f.variables["sftof"][:]
+                    cellarea_or=f.variables["areacello"][:]
+                    latitude_or=f.variables["latitude"][:]
+                    f.close()
+                    if r == "Arctic":
+                        regionmask = (latitude_or > 0.0)
+                    elif r == "Antarctic":
+                        regionmask = (latitude_or < 0.0)
+                    else:
+                        sys.exit("(fig2) region unknown")
+                    diag =  compute_extent(siconc, cellarea_or, threshold = 15.0, mask = mask_or * regionmask)
+                    data[j_d, j_r, j_e, :] = diag[(yearb - 1979) * 12:(yeare - 1979) * 12 + 12]
 
-            data_thic = np.empty((n_years * 12, ncat, ny ,nx))
-            data_thic[:] = np.nan
 
-        data_conc[(year - yearb) * 12 : (year - yearb) * 12 + 12, :, :] = siconcat
-        data_thic[(year - yearb) * 12 : (year - yearb) * 12 + 12, :, :] = sithicat
+                if d == "volume":
+                    filein = repo + "/REF/" + "sivol_SImon_" + volshort + "_r1i1p1_197901-201512.nc"
+                    f = Dataset(filein, mode = "r")
+                    sivol = f.variables["sivol"][:]
+                    mask_or=f.variables["sftof"][:]
+                    cellarea_or=f.variables["areacello"][:]
+                    latitude_or = f.variables["latitude"][:]
+                    f.close()
+                    if r == "Arctic":
+                        regionmask = (latitude_or > 0.0)
+                    elif r == "Antarctic":
+                        regionmask = (latitude_or < 0.0)
+                    else:
+                        sys.exit("(fig2) region unknown")
+
+                    diag = compute_volume(sivol, cellarea_or, mask = mask_or * regionmask)
+                    data[j_d, j_r, j_e, :] = diag[(yearb - 1979) * 12:(yeare - 1979) * 12 + 12]
+    else: # Model data
+
+        # 1. Load the data
+        for year in years:
+            filein = repo + "/" + e + "/" + e + "_1m_" + str(year) + "0101_" + str(year) + "1231_icemod.nc"
+            f = Dataset(filein, mode = "r")
+            siconc = f.variables["siconc"][:] * 100.0 #Conversion to %
+            sivolu = f.variables["sivolu"][:]
+            f.close()
+    
+            # Compute diagnostics
+            for j_r, r in enumerate(regions):
+                if r == "Arctic":
+                    maskregion = (lat > 0.0)
+                elif r == "Antarctic":
+                    maskregion = (lat < 0.0)
+                else:
+                    sys.exit("(fig2) region unknown")
+    
+                for j_d, d in enumerate(diags):
+                    if d == "extent":
+                        diag = compute_extent(siconc, cellarea, threshold = 15.0, mask = (maskregion * mask))
+                    elif d == "volume":
+                        diag = compute_volume(sivolu, cellarea,                   mask = (maskregion * mask))
+                    else:
+                        sys.exit("(fig2) unknown diag")
+    
+                    data[j_d, j_r, j_e, (year - yearb) * 12 : (year - yearb) * 12 + 12] = diag
+    
 
     # Compute seasonal cycles
-    cycle_conc = np.empty((12, ncat, ny, nx))
-    cycle_thic = np.empty((12, ncat, ny, nx))
-    cycle_conc[:] = np.nan
-    cycle_thic[:] = np.nan
-
-    area = np.empty((12, n_regions, ncat))
-    area[:] = np.nan
-    for m in range(12):
-        cycle_conc[m, :, :, :] = np.mean(data_conc[m::12, :, :], axis = 0)
-        cycle_thic[m, :, :, :] = np.mean(data_thic[m::12, :, :], axis = 0)
-
-        for j_r, r in enumerate(regions):
-            if r == "Arctic":
-                regionmask = (lat > 0.0)
-            elif r == "Antarctic":
-                regionmask = (lat < 0.0)
-            else:
-                sys.exit("(fig2) region unknown")
-
-            # Now for each category we compute the area of ice of that category in the zone
-            for jcat in range(ncat):
-                #Area of ice in that category
-                area[m, j_r, jcat] = compute_area(cycle_conc[m, jcat, :, :], cellarea, mask = mask * thermomask * regionmask)
-
-            for jcat in range(ncat):
-                itd[j_e][m][j_r].append(area[m, j_r, jcat] / np.sum(area[m, j_r, :]) / binwidths[j_e][jcat] * 100.0) # %/m
-
+    for j_r, r in enumerate(regions):
+        for j_d, d in enumerate(diags):
+            series = data[j_d, j_r, j_e, :]  
+            cycles[j_d, j_r, j_e, :] = np.array([np.mean(series[m::12]) for m in np.arange(12)])
 
 # Plots
-fig = plt.figure(figsize = (10, 4))
+fig = plt.figure(figsize = (5, 8))
 
 j_plot = 1
+
 for j_r, r in enumerate(regions):
-    # Create Basemap
-    if r == "Arctic":
-        month = 3 - 1 # March, pythonic
-        ymax = 80.0
-    elif r == "Antarctic":
-        month = 9 - 1 # September, pythonic
-        ymax = 150.0
+    for j_d, d in enumerate(diags):
+        plt.subplot(n_regions, n_diags, j_plot)
+        for j_e, e in enumerate(exps):
+            # Trick: appending the January after December and December before January for 
+            #        better visual effect
+            series = cycles[j_d, j_r, j_e, :]
+            newseries = np.append(np.append(series[-1], series), series[0])
 
-    for j_e, e in enumerate(exps):
-        plt.subplot(n_regions, n_exps, j_plot)
-        for j in range(len(boundaries[j_e]) - 1):
-            b1, b2 = np.log(boundaries[j_e][j]), np.log(boundaries[j_e][j + 1])
-            plt.fill((b1, b2, b2, b1), (0.0, 0.0, itd[j_e][month][j_r][j], itd[j_e][month][j_r][j]), color = [0.8, 0.8, 0.8])
-            plt.plot((b1, b1), (0, 1e9), color = [0.2, 0.2, 0.2], linestyle = ":", linewidth = 0.5)
-        plt.ylim(0.0, ymax)
-        if j_e == 0:
-            plt.ylabel(r + "\ng(h) [%/m]")
-        else:
-            plt.yticks([], "")
-        if j_r == 0:
-             plt.xticks([np.log(h) for h in boundaries[j_e][1:]], [""     for  h in boundaries[j_e][1:]], rotation = 90, fontsize = 7)
-             plt.title(labels[j_e])
-        else:
-             plt.xticks([np.log(h) for h in boundaries[j_e][1:]], [str(h) for  h in boundaries[j_e][1:]], rotation = 90, fontsize = 7)
+            newtime = np.arange(0, 12 + 2)
+            f = interp1d(newtime, newseries, kind = 'cubic')
 
-        plt.xlim(np.log(0.1), np.log(8.0))
-        #plt.tight_layout()
-        j_plot += 1   
+            hrtime = np.arange(0, 12 + 1, 0.1)
 
-plt.text(-20, -70, "Sea ice thickness [m]", fontsize = 14)
-plt.tight_layout(pad = 2.2)#, w_pad=1.5, h_pad=1.0)
+            plt.plot(hrtime, f(hrtime), color = colors[j_e], lw = 3, label = labels[j_e])
+
+            # Plot data lighter
+            plt.scatter(newtime, newseries, 80, marker = "*", color = colors[j_e], zorder = 1000, edgecolor = "white", linewidth = 0.2)
+
+        ylim = plt.gca().get_ylim()
+
+        for m in range(12):
+          if m % 2 == 0: 
+            col = [0.9, 0.9, 0.9]
+          else:
+            col = [1.0, 1.0, 1.0]
+
+          plt.fill((m + 0.5, m + 1.5, m + 1.5, m + 0.5), (0.0, 0.0, 1e9, 1e9), color = col, zorder = 0)
+
+
+        plt.title(r + " sea ice " + d)
+        plt.xlim(0.5, 12.5)
+        plt.ylim(ylim)
+        plt.xticks(range(1, 12 + 1), ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"])   
+        plt.gca().tick_params(bottom = "off")
+        plt.gca().set_ylim(bottom = 0)
+        plt.ylabel(units[j_d])
+        plt.legend()
+   
+        plt.gca().yaxis.grid(True)
+        j_plot += 1
+
+plt.tight_layout()
 plt.savefig("./fig8.pdf", dpi = 300)
 plt.close("all")

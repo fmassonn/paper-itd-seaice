@@ -28,12 +28,12 @@ regions = ["Arctic", "Antarctic"]
 n_regions = len(regions)
 
 # indices of experiments to plot (from namelist)
-indices = [0, 1, 2, 3, 4, 5]
+indices = [0, 2, 3, 5]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]
 
-reference = 2 #index of the reference for differences (pythonic)
+reference = 1 #index of the reference for differences (pythonic)
 
 n_exps = len(exps)
 

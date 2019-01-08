@@ -3,12 +3,13 @@
 # Author Francois Massonnet
 # Date Jan 2019
 
-# Figure 5 of the ITD paper: seasonal cycles of bottom ice growth
+# Figure 5 of the ITD paper: summer patterns of sea ice concentratoin
 
 import numpy as np
 import matplotlib.pyplot as plt
 from netCDF4 import Dataset
-from scipy.interpolate import interp1d
+from mpl_toolkits.basemap import Basemap
+
 import os
 
 # Import functions
@@ -22,15 +23,21 @@ yearb, yeare = 1995, 2014
 years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
+# Regions
+regions = ["Arctic", "Antarctic"]
+n_regions = len(regions)
+
 # indices of experiments to plot (from namelist)
-indices = [0, 1, 2, 3, 4, 5]
+indices = [0, 2, 3, 5]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]
 n_exps = len(exps)
 
+reference = 1 #index of the reference for differences (pythonic)
+
 labels = [metadata[i][0] for i in indices]
-colors = [metadata[i][2] for i in indices]
+
 
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
@@ -41,28 +48,14 @@ cellarea = e1t * e2t
 lat = f.variables["gphit"][0, :, :]
 lon = f.variables["glamt"][0, :, :]
 mask= f.variables["tmaskutil"][0, :, :]
+ny, nx = mask.shape
 f.close()
 
-# Read thermodynamic mask (based on script fig4.py)
-thermomaskfile = repo + "/" + "thermomask.nc"
-if not os.path.isfile(thermomaskfile):
-    sys.exit("Mask file not found, compute it using fig4.py")
-f = Dataset(thermomaskfile, mode = "r")
-thermomask = f.variables["thermomask"][:]
-f.close()
 
-diags = ["bottom ice growth"]
-units = ["mm/day"]
-n_diags = len(diags)
-
-regions =   ["Arctic", "Antarctic"]
-n_regions = len(regions)
-
-
-data = np.empty((n_diags, n_regions, n_exps, n_years * 12))
+data = np.empty((n_exps, n_years * 12, ny, nx))
 data[:] = np.nan
-# Seasonal cycles
-cycles = np.empty((n_diags, n_regions, n_exps, 12))
+# Seasonal cycles  averages
+cycles = np.empty((n_exps, 12, ny, nx))
 cycles[:] = np.nan
 
 for j_e, e in enumerate(exps):
@@ -70,79 +63,68 @@ for j_e, e in enumerate(exps):
     for year in years:
         filein = repo + "/" + e + "/" + e + "_1m_" + str(year) + "0101_" + str(year) + "1231_icemod.nc"
         f = Dataset(filein, mode = "r")
-        vfxbog = f.variables["vfxbog"][:] * 1000.0 # m/day to mm / day
+        siconc = f.variables["siconc"][:] * 100.0 # to %
         f.close()
- 
-        # Compute diagnostics
-        for j_r, r in enumerate(regions):
-            if r == "Arctic":
-                maskregion = (lat > 0.0) * thermomask * mask
-            elif r == "Antarctic":
-                maskregion = (lat < 0.0) * thermomask * mask
-            else:
-                sys.exit("(fig2) region unknown")
-            for j_d, d in enumerate(diags):
-                if d == "bottom ice growth":
-                    # minus sign because of convention
-                    diag = np.asarray([np.sum( -vfxbog[jt, :, :] * cellarea * maskregion) / np.sum(cellarea * maskregion) for jt in range(vfxbog.shape[0])])
-                else:
-                    sys.exit("diag unknown")
-
-                data[j_d, j_r, j_e, (year - yearb) * 12 : (year - yearb) * 12 + 12] = diag
+        data[j_e, (year - yearb) * 12 : (year - yearb) * 12 + 12, :, :] = siconc
     
-
     # Compute seasonal cycles
-    for j_r, r in enumerate(regions):
-        for j_d, d in enumerate(diags):
-            series = data[j_d, j_r, j_e, :]  
-            cycles[j_d, j_r, j_e, :] = np.array([np.mean(series[m::12]) for m in np.arange(12)])
+    for m in range(12):
+        cycles[j_e, m, :, :] = np.mean(data[j_e, m::12, :, :], axis = 0)
+
 
 # Plots
-fig = plt.figure(figsize = (6, 6))
+fig = plt.figure(figsize = (12, 6))
 
 j_plot = 1
 
 for j_r, r in enumerate(regions):
-    for j_d, d in enumerate(diags):
-        plt.subplot(n_regions, n_diags, j_plot)
-        for j_e, e in enumerate(exps):
-            # Trick: appending the January after December and December before January for 
-            #        better visual effect
-            series = cycles[j_d, j_r, j_e, :]
-            newseries = np.append(np.append(series[-1], series), series[0])
 
-            newtime = np.arange(0, 12 + 2)
-            f = interp1d(newtime, newseries, kind = 'cubic')
+    # Create Basemap
+    if r == "Arctic":
+        m = Basemap(projection = "npstere", boundinglat = 65, lon_0 = 0,  resolution = "l")
+        month = 8 - 1 # August, pythonic
+        clevs = [0.0, 20, 40, 60, 80, 100]
+        clevs_diff = [-90, -70, -50, -30, -10, 10, 30, 50, 70, 90]#[-1.0, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.0]
+	myticks = [-90, -50, 0, 50, 90] 
+    elif r == "Antarctic":
+        m = Basemap(projection = "spstere", boundinglat = -60, lon_0 = 180, resolution = "l")
+        month = 2 - 1 # September, pythonic
+        clevs = [0, 20, 40, 60, 80, 100]
+        clevs_diff = [-50, -30, -10, 10, 30, 50]
+        myticks = [-50, -30, 0, 30, 50]
 
-            hrtime = np.arange(0, 12 + 1, 0.1)
+    x, y = m(lon, lat)
 
-            plt.plot(hrtime, f(hrtime), color = colors[j_e], lw = 3, label = labels[j_e])
+    for j_e, e in enumerate(exps):
+        plt.subplot(n_regions, n_exps, j_plot)
+        m.drawcoastlines()
+        m.fillcontinents(color = [0.7, 0.7, 0.7], lake_color = [1.0, 1.0, 1.0])
 
-            # Plot data lighter
-            plt.scatter(newtime, newseries, 80, marker = "*", color = colors[j_e], zorder = 1000, edgecolor = "white", linewidth = 0.2)
+        if j_e == reference:
+            levels = clevs
+            datatoplot = cycles[j_e, month, :, :]
+            cmap = plt.cm.Blues_r
+            extend = "neither"
+            title = labels[j_e]
+            ticks = levels
+        else:
+            levels = clevs_diff
+            datatoplot = cycles[j_e, month, :, :] - cycles[reference, month, :, :]
+            cmap = plt.cm.RdBu_r
+            extend = "both"
+            title = labels[j_e] + "-" + labels[reference]
+            ticks = myticks
+            
 
-        ylim = plt.gca().get_ylim()
-
-        for m in range(12):
-          if m % 2 == 0: 
-            col = [0.9, 0.9, 0.9]
-          else:
-            col = [1.0, 1.0, 1.0]
-
-          plt.fill((m + 0.5, m + 1.5, m + 1.5, m + 0.5), (0.0, 0.0, 1e9, 1e9), color = col, zorder = 0)
-
-
-        plt.title(r + " " + d)
-        plt.xlim(0.5, 12.5)
-        plt.ylim(ylim)
-        plt.xticks(range(1, 12 + 1), ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"])   
-        plt.gca().tick_params(bottom = "off")
-        plt.gca().set_ylim(bottom = 0)
-        plt.ylabel(units[j_d])
-        plt.legend()
-   
-        plt.gca().yaxis.grid(True)
-        j_plot += 1
+        cs = m.contourf(x,          y,          datatoplot,     levels = levels, latlon = False, cmap = cmap, extend = extend)
+        # Second call to contourf, ignoring last row and column: a strange NEMO grid issue
+        cs = m.contourf(x[:-1,:-1], y[:-1,:-1], datatoplot[:-1,:-1], levels = levels, latlon = False, cmap = cmap, extend = extend)
+        cbar = m.colorbar(cs, location = "bottom", pad = "5%")
+        cbar.set_label("%")
+        cbar.set_ticks(ticks)
+        plt.title(title)
+        #plt.tight_layout()
+        j_plot += 1   
 
 plt.tight_layout()
 plt.savefig("./fig5.pdf", dpi = 300)
