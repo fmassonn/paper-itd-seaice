@@ -84,14 +84,14 @@ for j_r, r in enumerate(regions):
         m = Basemap(projection = "npstere", boundinglat = 65, lon_0 = 0,  resolution = "l")
         month = 8 - 1 # August, pythonic
         clevs = [0.0, 20, 40, 60, 80, 100]
-        clevs_diff = [-90, -70, -50, -30, -10, 10, 30, 50, 70, 90]#[-1.0, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.0]
-	myticks = [-90, -50, 0, 50, 90] 
+        clevs_diff = [-35, -25, -15, -5 , 5, 15, 25, 35]#[-1.0, -0.75, -0.5, -0.25, 0.25, 0.5, 0.75, 1.0]
+	myticks = [-35, -15, 0, 15, 35]
     elif r == "Antarctic":
         m = Basemap(projection = "spstere", boundinglat = -60, lon_0 = 180, resolution = "l")
         month = 2 - 1 # September, pythonic
         clevs = [0, 20, 40, 60, 80, 100]
-        clevs_diff = [-50, -30, -10, 10, 30, 50]
-        myticks = [-50, -30, 0, 30, 50]
+        clevs_diff = [-35, -25, -15, -5 , 5, 15, 25, 35]
+        myticks = [-35, -15, 0, 15, 35]
 
     x, y = m(lon, lat)
 
