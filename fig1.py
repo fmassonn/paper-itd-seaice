@@ -14,7 +14,7 @@ exec(open("./namelist.py"))
 # ---------------------------------------------    
 
 table = [[m[0], m[3], m[2]] for m in metadata if m[0][0:2] == "S1"]
-fig = plt.figure(figsize = (4, 7))
+fig = plt.figure(figsize = (7, 7))
 
 plt.subplot(3, 1, 1)
 
@@ -35,6 +35,7 @@ plt.gca().spines['top'].set_visible(False)
 plt.xlabel("Ice thickness [m]")
 plt.xlim(-xu / 30.0, xu)
 plt.yticks(np.arange(len(table) + 1, 1, -1), [t[0] for t in table])
+plt.text(7, 4, "S1 - Changing number\nand position of boundaries")
 plt.tight_layout()
 
 # Second set of experiments: prescribed ITD by appending
@@ -60,6 +61,7 @@ plt.gca().spines['top'].set_visible(False)
 plt.xlabel("Ice thickness [m]")
 plt.xlim(-xu / 30.0, xu)
 plt.yticks(np.arange(len(table) + 1, 1, -1), [t[0] for t in table])
+plt.text(26, 4, "S2 - Adding thick\nice categories")
 plt.tight_layout()
 
 # Third set of experiments: prescribed ITD by refining or collapsing S2
@@ -86,6 +88,9 @@ plt.gca().set_aspect(aspect = 0.4)
 plt.xlabel("Ice thickness [m]")
 plt.xlim(-xu / 30.0, xu)
 plt.yticks(np.arange(len(table) + 1, 1, -1), [t[0] for t in table])
+plt.text(4.9, 3, "S3 - Refining resolution\nwithin a fixed weft\nof five categories")
 plt.tight_layout()
+
+fig.tight_layout(rect=[0,0,0.7,1]) 
 plt.savefig("./fig1.pdf", dpi = 300)
 
