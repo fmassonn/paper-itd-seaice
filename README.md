@@ -7,4 +7,4 @@
 
 2/ Specify namelist
 
-3/ run figure Python scripts
+3/ run figure Python scripts (Python 2.7.13 was used)
