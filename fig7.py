@@ -142,22 +142,28 @@ for j_r, r in enumerate(regions):
             b1, b2 = np.log(boundaries[j_e][j]), np.log(boundaries[j_e][j + 1])
             plt.fill((b1, b2, b2, b1), (0.0, 0.0, itd[j_e][month][j_r][j], itd[j_e][month][j_r][j]), color = [0.8, 0.8, 0.8])
             plt.plot((b1, b1), (0, 1e9), color = [0.2, 0.2, 0.2], linestyle = ":", linewidth = 0.5)
+            ghdh = itd[j_e][month][j_r][j] * (boundaries[j_e][j + 1] - boundaries[j_e][j]) 
+            midpoint = (np.max((np.log(0.1), b1)) + np.min((np.log(8.0), b2))) / 2.0
+            if midpoint < np.log(7.5):
+                plt.text(midpoint, itd[j_e][month][j_r][j], str(int(np.round(ghdh))) + "%", va = "bottom", ha = "center", rotation = 90, fontsize = 6)
         plt.ylim(0.0, ymax)
         if j_e == 0:
             plt.ylabel(r + "\ng(h) [%/m]")
         else:
             plt.yticks([], "")
         if j_r == 0:
-             plt.xticks([np.log(h) for h in boundaries[j_e][1:]], [""     for  h in boundaries[j_e][1:]], rotation = 90, fontsize = 7)
+             plt.xticks([np.log(0.1)] + [np.log(h) for h in boundaries[j_e][1:]] + [np.log(8.0)], [""] + [""     for  h in boundaries[j_e][1:]] + [""], rotation = 90, fontsize = 7)
              plt.title(labels[j_e])
         else:
-             plt.xticks([np.log(h) for h in boundaries[j_e][1:]], [str(h) for  h in boundaries[j_e][1:]], rotation = 90, fontsize = 7)
+             pass
+             plt.xticks([np.log(0.1)] + [np.log(h) for h in boundaries[j_e][1:]] + [np.log(8.0)], ["0.0"] + [str(h) for  h in boundaries[j_e][1:]] + ["99.0"], rotation = 90, fontsize = 7)
 
         plt.xlim(np.log(0.1), np.log(8.0))
-        #plt.tight_layout()
+        plt.tight_layout()
         j_plot += 1   
 
 plt.text(-20, -70, "Sea ice thickness [m]", fontsize = 14)
 plt.tight_layout(pad = 2.2)#, w_pad=1.5, h_pad=1.0)
+plt.savefig("./fig7.png", dpi = 600)
 plt.savefig("./fig7.pdf", dpi = 300)
 plt.close("all")
