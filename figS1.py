@@ -20,7 +20,7 @@ from seaice_commondiags import *
 exec(open("namelist.py"))
 
 # Years
-yearb, yeare = 1995, 2014
+yearb, yeare = 2012, 2013
 years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
@@ -66,14 +66,15 @@ for year in years:
     f.close()
 
     data[(year - yearb) * 12 : (year - yearb) * 12 + 12, :, :] = siconc
+
     
-    # Compute seasonal cycles
-    for m in range(12):
-        cycles[m, :, :] = np.mean(data[m::12, :, :], axis = 0)
+# Compute seasonal cycles
+for m in range(12):
+    cycles[m, :, :] = np.mean(data[m::12, :, :], axis = 0)
 
 
 # Compute mask
-maskzone = cycles > 99.0
+maskzone = np.max(cycles, axis = 0) > 99.0
 
 
 # Plots
