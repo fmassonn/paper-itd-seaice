@@ -88,7 +88,7 @@ plt.gca().set_aspect(aspect = 0.4)
 plt.xlabel("Ice thickness [m]")
 plt.xlim(-xu / 30.0, xu)
 plt.yticks(np.arange(len(table) + 1, 1, -1), [t[0] for t in table])
-plt.text(4.9, 3, "S3 - Refining resolution\nwithin a fixed weft\nof five categories")
+plt.text(4.9, 3, "S3 - Refining resolution\nwithin a fixed set\nof five categories")
 plt.tight_layout()
 
 fig.tight_layout(rect=[0,0,0.7,1]) 
