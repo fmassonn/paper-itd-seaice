@@ -8,7 +8,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
-exec(open("./namelist.py"))
+if sys.version_info.major == 3:
+    exec(open("./namelist.py").read())
 
 # First set of experiments: standard ITD of LIM
 # ---------------------------------------------    
