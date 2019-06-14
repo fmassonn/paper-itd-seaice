@@ -24,14 +24,14 @@ years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
 # indices of experiments to plot (from namelist)
-indices = [0, 2, 5]#, 8, 9, 5]
+indices = [0, 1, 2, 3, 4, 5]#, 8, 9, 5]
+indices = [6, 7, 8, 9, 10, 11] #, 8, 9, 5]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]
 n_exps = len(exps)
 
 labels = [metadata[i][0] for i in indices]
-colors = [metadata[i][2] for i in indices]
 
 # Read NEMO grid
 gridfile = repo + "/" + "mesh_mask_nemo.N3.6_ORCA1L75.nc"
@@ -55,13 +55,15 @@ f.close()
 regions =   ["Arctic", "Antarctic"]
 n_regions = len(regions)
 
-diags = ["vfxbog", "vfxsni", "vfxdyn",    # Ice production: bottom growth, snow-ice and dynamic 
+diags = ["vfxbog", "vfxsni", "vfxopw", "vfxdyn",    # Ice production: bottom growth, snow-ice and dynamic 
          "vfxsum", "vfxbom"]    # Ice melt      : surface and bottom
                                 # All in m/day
-diags_long = ["Basal growth", "Snow-ice production", "Dynamic production",
+diags_long = ["Basal growth", "Snow-ice production", "Open water", "Dynamic production",
               "Surface melt", "Bottom melt"]
 
-cols  = [[0.0, 0.0, 0.3], [0.4, 0.4, 1.0], [0.8, 0.8, 1.0],
+pivot_id = 4 # First index after which we count the term as melt
+
+cols  = [[0.0, 0.0, 0.3], [0.2, 0.2, 1.0], [0.5, 0.5, 1.0], [0.7, 0.7, 1.0],
          [0.5, 0.0, 0.0], [1.0, 0.5, 0.5]]
 n_diags = len(diags)
 
@@ -124,34 +126,12 @@ for j_r, r in enumerate(regions):
             else:
                 legend = None
 
-            ## Plot total for dynamic and bottom melt contributions (graphical twist)
-            #if d == "vfxdyn":
-            #    find_j_d1 = diags.index("vfxbog")
-            #    find_j_d2 = diags.index("vfxsni")
-            #    height = smeans[j_d, j_r, j_e, :] + smeans[find_j_d1, j_r, j_e, :] + smeans[find_j_d2, j_r, j_e, :]
-            #    zorder = 0
-            #if d == "vfxsni":
-            #    # Find index of other contribution
-            #    find_j_d = diags.index("vfxbog")
-            #    height = smeans[j_d, j_r, j_e, :] + smeans[find_j_d, j_r, j_e, :]
-            #    zorder = 100
-            #elif d == "vfxbom":
-            #    find_j_d = diags.index("vfxsum")
-            #    height =  smeans[j_d, j_r, j_e, :] + smeans[find_j_d, j_r, j_e, :]
-            #    zorder = 1
-            #else:
-            #    height = smeans[j_d, j_r, j_e, :]
-            #    zorder = 1000
-
-            #if j_r == 0 and j_e == 0:
-            #  print(d)
-            #  print(height[0])
-            if j_d == 0 or j_d == 3:
+            if j_d == 0 or j_d == pivot_id:
                 bottom = 0.0
-            elif j_d < 3:
+            elif j_d < pivot_id:
                 bottom = np.sum(smeans[0:j_d, j_r, j_e, :], axis = 0)
             else:
-                bottom = np.sum(smeans[3:j_d, j_r, j_e, :], axis = 0) #+ smeans[j_d, j_r, j_e, :]
+                bottom = np.sum(smeans[pivot_id:j_d, j_r, j_e, :], axis = 0) 
 
             height = smeans[j_d, j_r, j_e, :]                     
   
@@ -171,14 +151,17 @@ for j_r, r in enumerate(regions):
             plt.plot((x + 1.0 * j_e / (n_exps + 1), x + 1.0 * j_e / (n_exps + 1) + 0.9 * w), (net, net),
                   label = legend, color =  "lightgreen", linestyle = ":", zorder = 2000)
 
+        # Add exp name (only first panel first season)
+        if j_r == 0:
+          plt.text(j_e * w + 0.5 * w * 0.9, 0.2, labels[j_e], color = "w", rotation = 90, ha = "center", va = "bottom")
 
         plt.title(r + " sea ice mass balance")
-        plt.xlim(-0.5, 4.5)
+        plt.xlim(-0.5, 4.0)
         plt.plot((-0.5, 4.5), (0.0, 0.0), "k", zorder = 10000)
         plt.ylim(-12, 12)
-        plt.xticks([n + 0.5 * w * n_exps for n in range(4)], ["Jan-Feb-Mar", "Apr-May-Jun", "Jul-Aug-Sep", "Oct-Nov-Dec"])
+        plt.xticks([n + 0.5 * w * n_exps for n in range(4)], ["JFM mean", "AMJ mean", "JAS mean", "OND mean"])
         plt.ylabel("mm/day")
-        plt.legend(fontsize = 8)
+        plt.legend(fontsize = 7)
     plt.grid()
     plt.gca().xaxis.grid(False)
 
