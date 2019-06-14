@@ -67,7 +67,7 @@ plt.tight_layout()
 
 # Third set of experiments: prescribed ITD by refining or collapsing S2
 # ---------------------------------------------------------------------
-table = [[metadata[j][0], metadata[j][3], metadata[j][2]] for j in [14, 13, 9, 12]]
+table = [[metadata[j][0], metadata[j][3], metadata[j][2]] for j in [12, 13, 14, 15]]
 
 plt.subplot(3, 1, 3)
 
