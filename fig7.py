@@ -140,7 +140,7 @@ for j_r, r in enumerate(regions):
         plt.subplot(n_regions, n_exps, j_plot)
         for j in range(len(boundaries[j_e]) - 1):
             b1, b2 = np.log(boundaries[j_e][j]), np.log(boundaries[j_e][j + 1])
-            plt.fill((b1, b2, b2, b1), (0.0, 0.0, itd[j_e][month][j_r][j], itd[j_e][month][j_r][j]), color = [0.8, 0.8, 0.8])
+            plt.fill((b1, b2, b2, b1), (0.0, 0.0, itd[j_e][month][j_r][j], itd[j_e][month][j_r][j]), color = colors[j_e])
             plt.plot((b1, b1), (0, 1e9), color = [0.2, 0.2, 0.2], linestyle = ":", linewidth = 0.5)
             ghdh = itd[j_e][month][j_r][j] * (boundaries[j_e][j + 1] - boundaries[j_e][j]) 
             midpoint = (np.max((np.log(0.1), b1)) + np.min((np.log(8.0), b2))) / 2.0

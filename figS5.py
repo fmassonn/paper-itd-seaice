@@ -24,7 +24,7 @@ years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
 # indices of experiments to plot (from namelist)
-indices = [0, 1, 2, 3, 4, 5]
+indices = [12, 13, 14, 15]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]
@@ -167,6 +167,6 @@ for j_r, r in enumerate(regions):
     j_plot += 1
         #plt.gca().xaxis.grid(False)
 plt.tight_layout()
-plt.savefig("./fig10.pdf", dpi = 300)
-plt.savefig("./fig10.png", dpi = 600)
+plt.savefig("./figS5.pdf", dpi = 300)
+plt.savefig("./figS6.png", dpi = 600)
 plt.close("all")

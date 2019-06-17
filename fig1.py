@@ -10,7 +10,8 @@ import sys
 
 if sys.version_info.major == 3:
     exec(open("./namelist.py").read())
-
+else:
+    execfile("./namelist.py")
 # First set of experiments: standard ITD of LIM
 # ---------------------------------------------    
 
