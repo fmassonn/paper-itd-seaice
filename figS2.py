@@ -23,7 +23,7 @@ years = np.arange(yearb, yeare + 1)
 n_years = len(years)
 
 # indices of experiments to plot (from namelist)
-indices = [12, 9, 13, 14]
+indices = [12, 13, 14, 15]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]

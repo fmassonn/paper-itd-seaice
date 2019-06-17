@@ -25,7 +25,7 @@ n_years = len(years)
 remove_CAA = False # Whether or not to exclude the Canadian Arctic Archipelago
 
 # indices of experiments to plot (from namelist)
-indices = [0, 1, 2, 3, 4, 5, 15]
+indices = [0, 1, 2, 3, 4, 5, 16]
 
 # Experiments to plot
 exps   = [metadata[i][1] for i in indices]
