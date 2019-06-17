@@ -12,6 +12,9 @@ import sys
 
 if sys.version_info.major == 3:
     exec(open("./namelist.py").read())
+else:
+    execfile("./namelist.py")
+
 k = 2.0 
 dT = 30.0 
 Lf = 334000
